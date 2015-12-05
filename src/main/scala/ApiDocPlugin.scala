@@ -21,11 +21,11 @@ object ApiDocPlugin extends AutoPlugin {
     apidocLocation := "api.json",
     outputLocation := ".",
     generateScala := {
-      generateScalaClient(apidocLocation.value, outputLocation.value)
+      generateScalaClient(apidocLocation.value, outputLocation.value, organization.value, version.value)
     }
   )
 
-  private def generateScalaClient(apiLocation: String, outputFolder: String): Unit = {
+  private def generateScalaClient(apiLocation: String, outputFolder: String, packageName: String, version: String): Unit = {
     import builder.OriginalValidator
     import builder.api_json._
     import com.bryzek.apidoc.generator.v0.models._
@@ -39,7 +39,7 @@ object ApiDocPlugin extends AutoPlugin {
     val apidoc = Source.fromFile(apiLocation).mkString
 
     val service: Either[Seq[String], Service] = OriginalValidator(
-      ServiceConfiguration("ssc","com.ssc","0.0.1-SNAPSHOT"), //pull from build.sbt
+      ServiceConfiguration("", packageName, version),
       Original (OriginalType.ApiJson, apidoc), //also make this configurable at some point
       DatabaseServiceFetcher(Authorization.All)
     ).validate()
