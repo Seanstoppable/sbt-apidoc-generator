@@ -12,16 +12,20 @@ object ApiDocPlugin extends AutoPlugin {
   object autoImport {
     val generateScala = taskKey[Unit]("Generate Scala Client")
     val apidocLocation = settingKey[String]("Path to apidoc file")
+    val outputLocation = settingKey[String]("Path to generated output")
   }
 
   import autoImport._
 
   override def projectSettings = Seq(
     apidocLocation := "api.json",
-    generateScala <<= apidocLocation.map { filename => generateScalaClient(filename) }
+    outputLocation := ".",
+    generateScala := {
+      generateScalaClient(apidocLocation.value, outputLocation.value)
+    }
   )
 
-  private def generateScalaClient(filename: String): Unit = {
+  private def generateScalaClient(apiLocation: String, outputFolder: String): Unit = {
     import builder.OriginalValidator
     import builder.api_json._
     import com.bryzek.apidoc.generator.v0.models._
@@ -32,7 +36,7 @@ object ApiDocPlugin extends AutoPlugin {
     import lib.{DatabaseServiceFetcher, ServiceConfiguration}
     import scala.models._
 
-    val apidoc = Source.fromFile(filename).mkString
+    val apidoc = Source.fromFile(apiLocation).mkString
 
     val service: Either[Seq[String], Service] = OriginalValidator(
       ServiceConfiguration("ssc","com.ssc","0.0.1-SNAPSHOT"), //pull from build.sbt
@@ -53,14 +57,11 @@ object ApiDocPlugin extends AutoPlugin {
 
             import java.nio.file.{Paths, Files}
             import java.nio.charset.StandardCharsets
-            println(file)
-            Files.write(Paths.get(file.name), file.contents.getBytes(StandardCharsets.UTF_8))
+            Files.write(Paths.get(s"$outputFolder/${file.name}"), file.contents.getBytes(StandardCharsets.UTF_8))
           }
         }
-       println ("WE HAVE SERVICE")
       }
     }
-    println(service)
   }
 
 }
